@@ -29,4 +29,8 @@ public class EventDispatcher {
             }
         }
     }
+
+    public void shutdown() {
+        this.eventListeners.clear();
+    }
 }

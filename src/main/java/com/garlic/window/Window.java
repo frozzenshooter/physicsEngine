@@ -31,23 +31,20 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 public class Window {
 
     private final int height;
-
     private final int width;
     private final String title;
-    private long window;
-    private EventCallback eventCallback;
+    private boolean vSyncEnabled;
+    private final EventCallback eventCallback;
     private final List<Callback> callbacks = new ArrayList<>();
 
+    private long window;
 
     public Window(Properties properties, EventCallback callback) {
         this.width = properties.width;
         this.height = properties.height;
         this.title = properties.title;
+        this.vSyncEnabled = properties.vSyncEnabled;
         this.eventCallback = callback;
-    }
-
-    public boolean shouldClose() {
-        return !glfwWindowShouldClose(window);
     }
 
     public void render() {
@@ -79,12 +76,23 @@ public class Window {
         }
     }
 
+    public void setVSyncEnabled(boolean vSyncEnabled) {
+        this.vSyncEnabled = vSyncEnabled;
+
+        if (vSyncEnabled) {
+            glfwSwapInterval(1);
+        } else {
+            glfwSwapInterval(0);
+        }
+    }
+
     @Getter
     @Setter
     public static class Properties {
         private int height = 900;
         private int width = 1600;
         private String title = "Window title";
+        private boolean vSyncEnabled = true;
     }
 
     public void init() {
@@ -123,8 +131,8 @@ public class Window {
 
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
-        // Enable v-sync
-        glfwSwapInterval(1);
+
+        this.setVSyncEnabled(vSyncEnabled);
 
         // Make the window visible
         glfwShowWindow(window);
@@ -185,10 +193,6 @@ public class Window {
                 break;
             }
         }
-    }
-
-    public void setWindowShouldClose() {
-        glfwSetWindowShouldClose(window, true);
     }
 
     private void windowCloseEvent(long l) {

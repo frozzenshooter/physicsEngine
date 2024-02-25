@@ -5,6 +5,7 @@ import com.garlic.events.EventDispatcher;
 import com.garlic.events.EventType;
 import com.garlic.events.key.KeyCode;
 import com.garlic.events.key.KeyReleasedEvent;
+import com.garlic.events.window.WindowCloseEvent;
 import com.garlic.window.Window;
 import lombok.extern.log4j.Log4j2;
 
@@ -42,8 +43,9 @@ public class Application {
     private void registerEventListeners() {
         this.eventDispatcher.registerEventListener(EventType.WINDOW_RESIZE, this::logEvent);
         this.eventDispatcher.registerEventListener(EventType.WINDOW_CLOSE, this::logEvent);
+        this.eventDispatcher.registerEventListener(EventType.WINDOW_CLOSE, this::closeWindowIfNecessary);
         this.eventDispatcher.registerEventListener(EventType.KEY_RELEASED, this::logEvent);
-        this.eventDispatcher.registerEventListener(EventType.KEY_RELEASED, this::closeWindowHandling);
+        this.eventDispatcher.registerEventListener(EventType.KEY_RELEASED, this::closeWindowIfNecessary);
         this.eventDispatcher.registerEventListener(EventType.KEY_PRESSED, this::logEvent);
         this.eventDispatcher.registerEventListener(EventType.MOUSE_BUTTON_PRESSED, this::logEvent);
         this.eventDispatcher.registerEventListener(EventType.MOUSE_BUTTON_RELEASED, this::logEvent);
@@ -51,11 +53,13 @@ public class Application {
         this.eventDispatcher.registerEventListener(EventType.MOUSE_MOVED, this::logEvent);
     }
 
-    private void closeWindowHandling(Event event) {
+    private void closeWindowIfNecessary(Event event) {
         if (event instanceof KeyReleasedEvent keyReleasedEvent) {
             if (keyReleasedEvent.getKeyCode() == KeyCode.ESCAPE) {
-                window.setWindowShouldClose();
+                this.running = false;
             }
+        } else if (event instanceof WindowCloseEvent) {
+            this.running = false;
         }
     }
 
@@ -68,16 +72,19 @@ public class Application {
         log.info("Running");
         double lastFrameTime = Time.getTime();
 
+        var fps = 0d;
+
         while (running) {
             var currentFrameTime = Time.getTime();
-            var timeStep = new TimeStep(currentFrameTime, lastFrameTime);
+            var timeStep = new TimeStep(lastFrameTime, currentFrameTime);
             lastFrameTime = currentFrameTime;
+
+            fps = 1 / timeStep.getValue();
+            log.info("time taken for frame: " + timeStep.getValue() + "; FPS: " + fps);
 
             update(timeStep);
 
             render();
-
-            running = window.shouldClose();
         }
 
         shutdown();
@@ -98,5 +105,6 @@ public class Application {
 
     private void shutdown() {
         window.shutdown();
+        this.eventDispatcher.shutdown();
     }
 }
