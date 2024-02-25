@@ -6,7 +6,9 @@ import com.garlic.events.EventType;
 import com.garlic.events.key.KeyCode;
 import com.garlic.events.key.KeyReleasedEvent;
 import com.garlic.events.window.WindowCloseEvent;
-import com.garlic.window.Window;
+import com.garlic.renderer.Renderer;
+import com.garlic.renderer.Renderer2D;
+import com.garlic.window.*;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -14,6 +16,7 @@ public class Application {
 
     private static Application instance;
     private Window window;
+    private Renderer renderer;
     private boolean running;
     private final EventDispatcher eventDispatcher;
 
@@ -35,9 +38,11 @@ public class Application {
 
         this.registerEventListeners();
 
-        var props = new Window.Properties();
-        this.window = new Window(props, this::onEvent);
+        var props = new WindowProperties();
+        this.window = WindowFactory.create(WindowType.GLFW, props, this::onEvent);
         this.window.init();
+
+        this.renderer = new Renderer2D();
     }
 
     private void registerEventListeners() {
@@ -72,15 +77,12 @@ public class Application {
         log.info("Running");
         double lastFrameTime = Time.getTime();
 
-        var fps = 0d;
-
         while (running) {
             var currentFrameTime = Time.getTime();
             var timeStep = new TimeStep(lastFrameTime, currentFrameTime);
             lastFrameTime = currentFrameTime;
 
-            fps = 1 / timeStep.getValue();
-            log.info("time taken for frame: " + timeStep.getValue() + "; FPS: " + fps);
+            logFps(timeStep);
 
             update(timeStep);
 
@@ -89,6 +91,11 @@ public class Application {
 
         shutdown();
         log.info("Stopped");
+    }
+
+    private void logFps(TimeStep timeStep) {
+        double fps = 1 / timeStep.getValue();
+        log.info("time taken for frame: " + timeStep.getValue() + "; FPS: " + fps);
     }
 
     private void onEvent(Event event) {
@@ -100,11 +107,16 @@ public class Application {
     }
 
     private void render() {
-        window.render();
+        renderer.render();
+
+        window.swapBuffers();
+        window.pollEvents();
     }
 
     private void shutdown() {
         window.shutdown();
+
+        renderer.shutdown();
         this.eventDispatcher.shutdown();
     }
 }
