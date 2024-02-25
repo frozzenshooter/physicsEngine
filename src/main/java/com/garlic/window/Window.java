@@ -4,6 +4,8 @@ import com.garlic.events.EventCallback;
 import com.garlic.events.key.KeyCodeResolver;
 import com.garlic.events.key.KeyPressedEvent;
 import com.garlic.events.key.KeyReleasedEvent;
+import com.garlic.events.mouse.*;
+import com.garlic.events.window.WindowCloseEvent;
 import com.garlic.events.window.WindowResizeEvent;
 import lombok.Getter;
 import lombok.Setter;
@@ -71,7 +73,10 @@ public class Window {
 
         // Terminate GLFW and free the error callback
         glfwTerminate();
-        glfwSetErrorCallback(null).free();
+        var callback = glfwSetErrorCallback(null);
+        if (callback != null) {
+            callback.close();
+        }
     }
 
     @Getter
@@ -134,19 +139,64 @@ public class Window {
 
     private void createCallbacks() {
         KeyCodeResolver.init();
+        MouseCodeResolver.init();
 
         var keyCallback = glfwSetKeyCallback(window, this::keyCallback);
         this.callbacks.add(keyCallback);
 
         var windowSizeCallback = glfwSetWindowSizeCallback(window, this::windowSizeCallback);
         this.callbacks.add(windowSizeCallback);
+
+        var windowCloseCallback = glfwSetWindowCloseCallback(window, this::windowCloseEvent);
+        this.callbacks.add(windowCloseCallback);
+
+        var mouseCallback = glfwSetMouseButtonCallback(window, this::mouseCallback);
+        this.callbacks.add(mouseCallback);
+
+        var mouseScrollCallback = glfwSetScrollCallback(window, this::mouseScrollCallback);
+        this.callbacks.add(mouseScrollCallback);
+
+        var mouseCursorPosCallback = glfwSetCursorPosCallback(window, this::mouseCourserPositionCallback);
+        this.callbacks.add(mouseCursorPosCallback);
+    }
+
+    private void mouseCourserPositionCallback(long window, double xPos, double yPos) {
+        var event = new MouseMovedEvent(xPos, yPos);
+        eventCallback.onEvent(event);
+    }
+
+    private void mouseScrollCallback(long window, double xOffset, double yOffset) {
+        var event = new MouseScrolledEvent(xOffset, yOffset);
+        eventCallback.onEvent(event);
+    }
+
+    private void mouseCallback(long window, int button, int action, int mods) {
+        switch (action) {
+            case GLFW_PRESS: {
+                var mouseCode = MouseCodeResolver.resolve(button);
+                var event = new MouseButtonPressedEvent(mouseCode);
+                eventCallback.onEvent(event);
+                break;
+            }
+            case GLFW_RELEASE: {
+                var mouseCode = MouseCodeResolver.resolve(button);
+                var event = new MouseButtonReleasedEvent(mouseCode);
+                eventCallback.onEvent(event);
+                break;
+            }
+        }
+    }
+
+    public void setWindowShouldClose() {
+        glfwSetWindowShouldClose(window, true);
+    }
+
+    private void windowCloseEvent(long l) {
+        var event = new WindowCloseEvent();
+        eventCallback.onEvent(event);
     }
 
     private void keyCallback(long window, int key, int scancode, int action, int mods) {
-
-        if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
-            glfwSetWindowShouldClose(window, true); //TODO: move this -  We will detect this and close the window
-
         switch (action) {
             case GLFW_PRESS: {
                 var keyCode = KeyCodeResolver.resolve(key);
@@ -172,5 +222,4 @@ public class Window {
         var event = new WindowResizeEvent(width, height);
         this.eventCallback.onEvent(event);
     }
-
 }

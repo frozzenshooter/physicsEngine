@@ -10,7 +10,11 @@ public enum EventType {
     WINDOW_LOST_FOCUS("window focus lost"),
     WINDOW_MOVED("window moved"),
     KEY_PRESSED("key pressed"),
-    KEY_RELEASED("key released");
+    KEY_RELEASED("key released"),
+    MOUSE_BUTTON_PRESSED("mouse button pressed"),
+    MOUSE_BUTTON_RELEASED("mouse button released"),
+    MOUSE_SCROLLED("mouse scrolled"),
+    MOUSE_MOVED("mouse moved");
 
     private final String name;
 

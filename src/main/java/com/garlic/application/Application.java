@@ -3,6 +3,8 @@ package com.garlic.application;
 import com.garlic.events.Event;
 import com.garlic.events.EventDispatcher;
 import com.garlic.events.EventType;
+import com.garlic.events.key.KeyCode;
+import com.garlic.events.key.KeyReleasedEvent;
 import com.garlic.window.Window;
 import lombok.extern.log4j.Log4j2;
 
@@ -41,7 +43,20 @@ public class Application {
         this.eventDispatcher.registerEventListener(EventType.WINDOW_RESIZE, this::logEvent);
         this.eventDispatcher.registerEventListener(EventType.WINDOW_CLOSE, this::logEvent);
         this.eventDispatcher.registerEventListener(EventType.KEY_RELEASED, this::logEvent);
+        this.eventDispatcher.registerEventListener(EventType.KEY_RELEASED, this::closeWindowHandling);
         this.eventDispatcher.registerEventListener(EventType.KEY_PRESSED, this::logEvent);
+        this.eventDispatcher.registerEventListener(EventType.MOUSE_BUTTON_PRESSED, this::logEvent);
+        this.eventDispatcher.registerEventListener(EventType.MOUSE_BUTTON_RELEASED, this::logEvent);
+        this.eventDispatcher.registerEventListener(EventType.MOUSE_SCROLLED, this::logEvent);
+        this.eventDispatcher.registerEventListener(EventType.MOUSE_MOVED, this::logEvent);
+    }
+
+    private void closeWindowHandling(Event event) {
+        if (event instanceof KeyReleasedEvent keyReleasedEvent) {
+            if (keyReleasedEvent.getKeyCode() == KeyCode.ESCAPE) {
+                window.setWindowShouldClose();
+            }
+        }
     }
 
     private void logEvent(Event event) {

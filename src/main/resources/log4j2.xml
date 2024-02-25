@@ -4,10 +4,13 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %c{1.} - [%logger{1}]: %msg%n" />
         </Console>
+        <Async name="AsyncConsole" bufferSize="1024">
+            <AppenderRef ref="Console"/>
+        </Async>
     </Appenders>
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="Console" />
+            <AppenderRef ref="AsyncConsole" />
         </Root>
     </Loggers>
 </Configuration>
